@@ -189,7 +189,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
+        switch (item.getItemId()) {
+            case R.id.sign_out_menu:
+                AuthUI.getInstance().signOut(this);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -221,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
         // detach the listener
     }
 
-    // listener for reading from the database
+    // attach the listener for reading from the database
     private void attachDatabaseReadListener() {
         if(mChildEventListener == null) {
             // listener for reading from the database
@@ -250,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // detach the listener from reading the database
     private void detachDatabaseReadListener() {
         if(mChildEventListener != null) {
             mMessagesDatabaseReference.removeEventListener(mChildEventListener);
