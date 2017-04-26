@@ -15,6 +15,7 @@
  */
 package com.google.firebase.udacity.friendlychat;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -132,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: Send messages on click
                 Message message = new Message(mMessageEditText.getText().toString(), mUsername, null);
                 // writing to the db
                 mMessagesDatabaseReference.push().setValue(message);
@@ -142,45 +142,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mChildEventListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                // converts newly added message into Message object
-                Message message = dataSnapshot.getValue(Message.class);
-                mMessageAdapter.add(message);
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        };
-
-        // add child listener to the "messages" node
-        mMessagesDatabaseReference.addChildEventListener(mChildEventListener);
-
         // listener that triggers when user sign in or sign out
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-            // firebaseAuth has two states, it's either signed in or it's signed out
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                // firebaseAuth object has two states, it's either signed in or it's signed out
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if(user != null) {
-                    // user is signed in
-                    Toast.makeText(MainActivity.this, "You're now signed in. Welcom to FriendlyChat!", Toast.LENGTH_LONG);
+                    // user is signed in (authorized)
+                    onSignedInInitialize(user.getDisplayName());
+                    Toast.makeText(MainActivity.this, "You're now signed in. Welcome to the Chat!", Toast.LENGTH_LONG);
                 } else {
-                    // user is signed out
+                    // user is signed out (don't authorized)
+                    onSignedOutCleanup();
                     startActivityForResult(
                             AuthUI.getInstance().createSignInIntentBuilder()
                                     .setIsSmartLockEnabled(false)
@@ -191,6 +165,19 @@ public class MainActivity extends AppCompatActivity {
 
             }
         };
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == RC_SIGN_IN) {
+            if(resultCode == RESULT_OK) {
+                Toast.makeText(this, "Signed In!", Toast.LENGTH_SHORT).show();
+            } else if(resultCode == RESULT_CANCELED) {
+                Toast.makeText(this, "Sign in canceled", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        }
     }
 
     @Override
@@ -214,6 +201,60 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
+        if(mAuthStateListener != null) {
+            mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
+        }
+        detachDatabaseReadListener();
+        mMessageAdapter.clear();
+    }
+
+    private void onSignedInInitialize(String username) {
+        mUsername = username;
+        attachDatabaseReadListener();
+    }
+
+    private void onSignedOutCleanup() {
+        // unset the user name
+        mUsername = ANONYMOUS;
+        // clean up UI
+        mMessageAdapter.clear();
+        // detach the listener
+    }
+
+    // listener for reading from the database
+    private void attachDatabaseReadListener() {
+        if(mChildEventListener == null) {
+            // listener for reading from the database
+            mChildEventListener = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                    // converts newly added message into Message object
+                    Message message = dataSnapshot.getValue(Message.class);
+                    mMessageAdapter.add(message);
+                }
+
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {}
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            };
+            // add child listener to the "messages" node
+            mMessagesDatabaseReference.addChildEventListener(mChildEventListener);
+        }
+    }
+
+    private void detachDatabaseReadListener() {
+        if(mChildEventListener != null) {
+            mMessagesDatabaseReference.removeEventListener(mChildEventListener);
+            mChildEventListener = null;
+        }
+
     }
 }
