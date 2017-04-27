@@ -39,18 +39,16 @@ dependencies {
     compile 'com.android.support:design:24.2.0'
     compile 'com.android.support:appcompat-v7:24.2.0'
 
-    // realtime database
+    // Firebase
     compile 'com.google.firebase:firebase-database:10.2.1'
+    compile 'com.google.firebase:firebase-auth:10.2.1'
+    compile 'com.google.firebase:firebase-storage:10.2.1'
 
     // Displaying images
-    compile 'com.github.bumptech.glide:glide:3.6.1'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
 
-    // firebase auth
-    compile 'com.google.firebase:firebase-auth:10.2.1'
-
-    // FirebaseUI Auth UI only
+    // FirebaseUI
     compile 'com.firebaseui:firebase-ui-auth:1.2.0'
-
 }
 
 // reads the configuration information for google-services.json
