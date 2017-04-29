@@ -28,5 +28,4 @@
         android:layout_weight="0"
         android:textAppearance="?android:attr/textAppearanceSmall"
         tools:text="Name" />
-
 </LinearLayout>
